@@ -12,9 +12,9 @@ public class FileInfo {
     private String absolutePath;
 
     /**
-     * 类型，目录或文件
+     * 类型，目录或文件。见{@link FileType}中的定义。
      */
-    private FileType fileType;
+    private Integer fileType;
 
     private LayerInfo layerInfo;
 
@@ -34,11 +34,11 @@ public class FileInfo {
         this.absolutePath = absolutePath;
     }
 
-    public FileType getFileType() {
+    public Integer getFileType() {
         return fileType;
     }
 
-    public void setFileType(FileType fileType) {
+    public void setFileType(Integer fileType) {
         this.fileType = fileType;
     }
 

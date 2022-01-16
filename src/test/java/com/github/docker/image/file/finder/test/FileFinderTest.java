@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class FileFinderTest {
 
@@ -32,6 +33,45 @@ public class FileFinderTest {
                 Arrays.asList(FileType.FILE, FileType.SYMBOLIC_LINK, FileType.DIR),
                 null,
                 null
+        );
+        List<FileInfo> fileInfos = finder.find("sha256:a31efa943659ac369c5b3a7474cdf0e8a526624124da612a6a1668393934e403");
+        System.out.println(JSON.toJSONString(fileInfos, true));
+    }
+
+    @Test
+    public void testFind2() throws IOException, NoSuchAlgorithmException {
+        FileFinder finder = new FileFinder(
+                dockerClient,
+                "/usr/bin",
+                Arrays.asList(FileType.FILE, FileType.DIR),
+                null,
+                null
+        );
+        List<FileInfo> fileInfos = finder.find("sha256:a31efa943659ac369c5b3a7474cdf0e8a526624124da612a6a1668393934e403");
+        System.out.println(JSON.toJSONString(fileInfos, true));
+    }
+
+    @Test
+    public void testFind3() throws IOException, NoSuchAlgorithmException {
+        FileFinder finder = new FileFinder(
+                dockerClient,
+                "/usr/bin",
+                Arrays.asList(FileType.FILE, FileType.DIR),
+                Pattern.compile("/usr/bin/t.*"),
+                null
+        );
+        List<FileInfo> fileInfos = finder.find("sha256:a31efa943659ac369c5b3a7474cdf0e8a526624124da612a6a1668393934e403");
+        System.out.println(JSON.toJSONString(fileInfos, true));
+    }
+
+    @Test
+    public void testFind4() throws IOException, NoSuchAlgorithmException {
+        FileFinder finder = new FileFinder(
+                dockerClient,
+                "/usr/bin",
+                Arrays.asList(FileType.FILE, FileType.DIR),
+                null,
+                Pattern.compile("t.*")
         );
         List<FileInfo> fileInfos = finder.find("sha256:a31efa943659ac369c5b3a7474cdf0e8a526624124da612a6a1668393934e403");
         System.out.println(JSON.toJSONString(fileInfos, true));

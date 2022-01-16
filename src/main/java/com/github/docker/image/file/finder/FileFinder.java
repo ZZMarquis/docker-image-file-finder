@@ -30,11 +30,11 @@ public class FileFinder {
     private Pattern fileNameRegex;
 
     /**
-     * @param dockerClient
-     * @param startDirPath  指定目录查找，例如：/etc，则只查找
-     * @param fileTypes
-     * @param fullPathRegex
-     * @param fileNameRegex
+     * @param dockerClient  docker客户端实例。
+     * @param startDirPath  指定起始查找目录，例如：/etc，则只查找/etc目录下的文件。可以传null，传null、""、"/"都表示从根目录下开始查找。
+     * @param fileTypes     文件类型。
+     * @param fullPathRegex 全路径匹配正则，这里的全路径指的是在镜像中的路径的全路径，而不是在宿主机上的绝对路径。可以传null，传null则表示不根据该正则来筛选。
+     * @param fileNameRegex 文件名匹配正则。可以传null，传null则表示不根据该正则来筛选。
      */
     public FileFinder(DockerClient dockerClient, String startDirPath, List<FileType> fileTypes, Pattern fullPathRegex, Pattern fileNameRegex) {
         this.dockerClient = dockerClient;
@@ -112,7 +112,10 @@ public class FileFinder {
                 if (isParentDir(startDirPath, pathInImage)
                         || isParentDir(pathInImage, startDirPath)) {
                     // 当前目录和指定的起始目录互为父目录时，都应该继续往下查找
-                    addFileInfo(file, FileType.DIR, layerInfo, diffDirPath, fileInfos);
+                    if (isParentDir(startDirPath, pathInImage)) {
+                        // 但是只有指定的起始目录是当前目录的父目录时，才需要把这个目录信息加到返回列表里
+                        addFileInfo(file, FileType.DIR, layerInfo, diffDirPath, fileInfos);
+                    }
                     for (File subFile : Objects.requireNonNull(file.listFiles())) {
                         recursiveFindFiles(++recursiveDepth, subFile, diffDirPath, layerInfo, fileInfos);
                     }
@@ -139,6 +142,9 @@ public class FileFinder {
         if (!dirPath.startsWith(parentDirPath)) {
             return false;
         }
+        if (Objects.equals(parentDirPath, dirPath)) {
+            return true;
+        }
         String suffix = dirPath.substring(parentDirPath.length());
         if (suffix.startsWith("/")) {
             return true;
@@ -160,7 +166,7 @@ public class FileFinder {
 
         FileInfo fileInfo = new FileInfo();
         fileInfo.setLayerInfo(layerInfo);
-        fileInfo.setFileType(fileType);
+        fileInfo.setFileType(fileType.getCode());
         fileInfo.setAbsolutePath(absolutePath);
         fileInfo.setPathInImage(pathInImage);
         fileInfos.add(fileInfo);
@@ -190,9 +196,9 @@ public class FileFinder {
 
     private void getCacheIds(List<LayerInfo> layerInfos) throws IOException {
         for (int i = 0; i < layerInfos.size(); ++i) {
-            String rawChainId = layerInfos.get(0).getChainId().substring(DIGEST_PREFIX.length());
+            String rawChainId = layerInfos.get(i).getChainId().substring(DIGEST_PREFIX.length());
             String cacheIdFilePath = String.format(CACHE_ID_FILE_FMT, rawChainId);
-            layerInfos.get(0).setCacheId(readCacheId(cacheIdFilePath));
+            layerInfos.get(i).setCacheId(readCacheId(cacheIdFilePath));
         }
     }
 
